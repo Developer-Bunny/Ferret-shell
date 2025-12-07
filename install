@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+CONFIG_DIR="$HOME/.config/quickshell/ferret"
+
+mkdir -p "$CONFIG_DIR"
+#cp -r ./assets "$CONFIG_DIR/"
+
+cmake -B build -G Ninja \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX="$HOME/.local" \
+	-DINSTALL_QSCONFDIR="$CONFIG_DIR"
+
+cmake --build build
+cmake --install build
