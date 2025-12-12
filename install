@@ -2,10 +2,12 @@
 set -e
 
 CONFIG_DIR="$HOME/.config/quickshell/ferret"
+QML_LIB_PATH="$HOME/.local/usr/lib/qt6/qml"
 
+echo "-- Creando directorio $CONFIG_DIR"
 mkdir -p "$CONFIG_DIR"
-#cp -r ./assets "$CONFIG_DIR/"
 
+echo "-- Compilando"
 cmake -B build -G Ninja \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX="$HOME/.local" \
@@ -13,3 +15,42 @@ cmake -B build -G Ninja \
 
 cmake --build build
 cmake --install build
+
+echo "-- Instalación completada."
+
+echo "-- Configurando variables de entorno"
+
+CURRENT_SHELL=$(basename "$SHELL")
+DETECTED_CONFIG=""
+
+add_config() {
+	local file="$1"
+	local entry="$2"
+	if [ -f "$file" ]; then
+		if ! grep -q "$QML_LIB_PATH" "$file"; then
+			echo "" >>"$file"
+			echo "# Quickshell Ferret Module Path" >>"$file"
+			echo "$entry" >>"$file"
+			echo "   -> Agregado a $file"
+		fi
+		DETECTED_CONFIG="$file"
+	fi
+}
+
+if [ -d "$HOME/.config/fish" ]; then
+	add_config "$HOME/.config/fish/config.fish" "set -Ux QML_IMPORT_PATH \"$QML_LIB_PATH\" \$QML_IMPORT_PATH"
+fi
+
+add_config "$HOME/.bashrc" "export QML_IMPORT_PATH=\"$QML_LIB_PATH:\$QML_IMPORT_PATH\""
+
+add_config "$HOME/.zshrc" "export QML_IMPORT_PATH=\"$QML_LIB_PATH:\$QML_IMPORT_PATH\""
+
+echo "-- Recargando Shell"
+
+if [[ "$SHELL" == *"fish"* ]]; then
+	exec fish
+elif [[ "$SHELL" == *"zsh"* ]]; then
+	exec zsh
+else
+	exec bash
+fi
